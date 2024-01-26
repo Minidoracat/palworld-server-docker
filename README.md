@@ -1,205 +1,130 @@
-# Palworld Dedicated Server Docker
+# 本修改版容器仅在使用标准的 Ubuntu 20 至 23 系统且使用官网流程部署的 docker engine 上通过测试
 
-![Release](https://img.shields.io/github/v/release/thijsvanloef/palworld-server-docker)
-![Docker Pulls](https://img.shields.io/docker/pulls/thijsvanloef/palworld-server-docker)
-![Docker Stars](https://img.shields.io/docker/stars/thijsvanloef/palworld-server-docker)
-![Image Size](https://img.shields.io/docker/image-size/thijsvanloef/palworld-server-docker/latest)
+修改内容：
+- 内存溢出修复
+- 内存快满后自动重启
+- 内存用量警告
+- 定时备份
+- 首次启动强制更新
 
-[View on Docker Hub](https://hub.docker.com/r/thijsvanloef/palworld-server-docker)
-
-> [!TIP]
-> Unsure how to get started? Check out the [this guide I wrote!](https://tice.tips/containerization/palworld-server-docker/)
-
-This is a Docker container to help you get started with hosting your own
-[Palworld](https://store.steampowered.com/app/1623730/Palworld/) dedicated server.
-
-This Docker container has been tested and will work on both Linux (Ubuntu/Debian) and Windows 10.
-
-> [!IMPORTANT]
-> At the moment, Xbox Gamepass/Xbox Console players will not be able to join a dedicated server.
->
-> They will need to join players using the invite code and are limited to sessions of 4 players max.
-
-## Server Requirements
-
-| Resource | Minimum | Recommended                              |
-|----------|---------|------------------------------------------|
-| CPU      | 4 cores | 4+ cores                                 |
-| RAM      | 16GB    | Recommend over 32GB for stable operation |
-| Storage  | 4GB     | 12GB                                     |
-
-## How to use
-
-Keep in mind that you'll need to change the [environment variables](#environment-variables).
-
-### Docker Compose
-
-This repository includes an example [docker-compose.yml](example/docker-compose.yml) file you can use to setup your server.
-
-```yml
+## Compose File:
+```yaml
 services:
-   palworld:
-      image: thijsvanloef/palworld-server-docker:latest
-      restart: unless-stopped
-      container_name: palworld-server
-      ports:
-        - 8211:8211/udp
-        - 27015:27015/udp
-      environment:
-         - PUID=1000
-         - PGID=1000
-         - PORT=8211 # Optional but recommended
-         - PLAYERS=16 # Optional but recommended
-         - SERVER_PASSWORD="worldofpals" # Optional but recommended
-         - MULTITHREADING=true
-         - RCON_ENABLED=true
-         - RCON_PORT=25575
-         - TZ=UTC
-         - ADMIN_PASSWORD="adminPasswordHere"
-         - COMMUNITY=false  # Enable this if you want your server to show up in the community servers tab, USE WITH SERVER_PASSWORD!
-         - SERVER_NAME="World of Pals"
-      volumes:
-         - ./palworld:/palworld/
+  palworld:
+    image: djkcyl/palserver-patch:latest
+    restart: unless-stopped
+    container_name: palworld-server-test
+    ports:
+    - 8211:8211/udp
+    environment:
+    - ADMIN_PASSWORD="Aa123456"
+    - COMMUNITY=false
+    - MULTITHREADING=true
+    - PGID=1000
+    - PLAYERS=32
+    - PORT=8211
+    - PUID=1000
+    - ROCN_ENABLED=true
+    - ROCN_PORT=25575
+    - UPDATE_ON_BOOT=false
+    - AUTO_SHUTDOWN=true
+    - PATCH_SERVER=true
+    volumes:
+    - ./palworld:/palworld/
+    - ~/PalServer-Linux-Test:/home/steam/PalServer-Linux-Test
+    - ~/md5.txt:/home/steam/md5.txt
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+    networks:
+    - pal_network
+networks:
+  pal_network:
+    external: true
 ```
 
-### Docker Run
+请前往 https://github.com/VeroFess/PalWorld-Server-Unoffical-Fix/releases 下载最新 Linux patch 文件，并放置于当前用户根目录，也就是 ~/
 
-Change every <> to your own configuration
+例如 /home/palserver/PalServer-Linux-Test
 
-```bash
-docker run -d \
-    --name palworld-server \
-    -p 8211:8211/udp \
-    -p 27015:27015/udp \
-    -v ./<palworld-folder>:/palworld/ \
-    -e PUID=1000 \
-    -e PGID=1000 \
-    -e PORT=8211 \
-    -e PLAYERS=16 \
-    -e MULTITHREADING=true \
-    -e RCON_ENABLED=true \
-    -e RCON_PORT=25575 \
-    -e TZ=UTC \
-    -e ADMIN_PASSWORD="adminPasswordHere" \
-    -e SERVER_PASSWORD="worldofpals" \
-    -e COMMUNITY=false \
-    -e SERVER_NAME="World of Pals" \
-    --restart unless-stopped \
-    thijsvanloef/palworld-server-docker:latest
+然后查找已更新的服务端内的 **原始** `PalServer-Linux-Test` 文件md5并放置于 `~/md5.txt` 内。
 
+方法：`docker exec palworld-server md5sum /palworld/Pal/Binaries/Linux/PalServer-Linux-Test`
+
+`目前版本应该为：647b75edde73dd7d9825523fe8aa0f3e`
+
+此时你的根目录应该有两个文件
+```
+-rw-rw-r--  1 palworld palworld        32 Jan 25 16:47 md5.txt
+-rw-rw-r--  1 palworld palworld 189756648 Jan 25 16:22 PalServer-Linux-Test
 ```
 
-### Kubernetes
+## 首次启动的示范
 
-All files you will need to deploy this container to kubernetes are located in the [k8s folder](k8s/).
-
-Follow the steps in the [README.md here](k8s/readme.md) to deploy it.
-
-#### Using helm chart
-
-Follow up the docs on the [README.md for the helm chart](./chart/README.md) to deploy.
-
-### Environment variables
-
-You can use the following values to change the settings of the server on boot.
-It is highly recommended you set the following environment values before starting the server:
-
-* PLAYERS
-* PORT
-* PUID
-* PGID
-
-| Variable         | Info                                                                                                                                                                                               | Default Values | Allowed Values                                                                                             |
-|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------|------------------------------------------------------------------------------------------------------------|
-| TZ               | Timezone used for time stamping backup server                                                                                                                                                      | UTC            | See [TZ Identifiers](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#Time_Zone_abbreviations) |
-| PLAYERS*         | Max amount of players that are able to join the server                                                                                                                                             | 16             | 1-32                                                                                                       |
-| PORT*            | UDP port that the server will expose                                                                                                                                                               | 8211           | 1024-65535                                                                                                 |
-| PUID*            | The uid of the user the server should run as                                                                                                                                                       | 1000           | !0                                                                                                         |
-| PGID*            | The gid of the group the server should run as                                                                                                                                                      | 1000           | !0                                                                                                         |
-| MULTITHREADING** | Improves performance in multi-threaded CPU environments. It is effective up to a maximum of about 4 threads, and allocating more than this number of threads does not make much sense.             | false          | true/false                                                                                                 |
-| COMMUNITY        | Whether or not the server shows up in the community server browser (USE WITH SERVER_PASSWORD)                                                                                                      | false          | true/false                                                                                                 |
-| PUBLIC_IP        | You can manually specify the global IP address of the network on which the server running. If not specified, it will be detected automatically. If it does not work well, try manual configuration. |                | x.x.x.x                                                                                                    |
-| PUBLIC_PORT      | You can manually specify the port number of the network on which the server running. If not specified, it will be detected automatically. If it does not work well, try manual configuration.       |                | 1024-65535                                                                                                 |
-| SERVER_NAME      | A name for your server               |                | "string"                                                                                                   |
-| SERVER_PASSWORD  | Secure your community server with a password                                                                                                                                                       |                | "string"                                                                                                   |
-| ADMIN_PASSWORD   | Secure administration access in the server with a password                                                                                                                                         |                | "string"                                                                                                   |
-| UPDATE_ON_BOOT** | Update/Install the server when the docker container starts (THIS HAS TO BE ENABLED THE FIRST TIME YOU RUN THE CONTAINER)                                                                           | true           | true/false                                                                                                 |
-| RCON_ENABLED***  | Enable RCON for the Palworld server                                                                                                                                                                | true           | true/false                                                                                                 |
-| RCON_PORT        | RCON port to connect to                                                                                                                                                                            | 25575          | 1024-65535                                                                                                 |
-| QUERY_PORT       | Query port used to communicate with Steam servers                                                                                                                                                  | 27015          | 1024-65535                                                                                                 |
-
-*highly recommended to set
-
-** Make sure you know what you are doing when running this option enabled
-
-*** Required for docker stop to save and gracefully close the server
-
-### Game Ports
-
-| Port  | Info             |
-|-------|------------------|
-| 8211  | Game Port (UDP)  |
-| 27015 | Query Port (UDP) |
-| 25575 | RCON Port (TCP)  |
-
-## Using RCON
-
-RCON is enabled by default for the palworld-server-docker image.
-Opening the RCON CLI is quite easy:
-
-```bash
-docker exec -it palworld-server rcon-cli
+```shell
+palworld-server-test  | *****EXECUTING USERMOD*****
+palworld-server-test  | usermod: no changes
+palworld-server-test  | *****STARTING INSTALL/UPDATE*****
+palworld-server-test  | tid(22) burning pthread_key_t == 0 so we never use it
+palworld-server-test  | Redirecting stderr to '/home/steam/Steam/logs/stderr.txt'
+palworld-server-test  | Logging directory: '/home/steam/Steam/logs'
+palworld-server-test  | [  0%] Checking for available updates...
+palworld-server-test  | [----] Verifying installation...
+palworld-server-test  | Steam Console Client (c) Valve Corporation - version 1705108307
+palworld-server-test  | -- type 'quit' to exit --
+palworld-server-test  | Loading Steam API...OK
+palworld-server-test  | 
+palworld-server-test  | Connecting anonymously to Steam Public...OK
+palworld-server-test  | Waiting for client config...OK
+palworld-server-test  | Waiting for user info...OK
+palworld-server-test  |  Update state (0x3) reconfiguring, progress: 0.00 (0 / 0)
+palworld-server-test  |  Update state (0x61) downloading, progress: 1.31 (29360128 / 2248053389)
+palworld-server-test  |  Update state (0x61) downloading, progress: 6.80 (152921228 / 2248053389)
+palworld-server-test  |  Update state (0x61) downloading, progress: 21.67 (487114768 / 2248053389)
+palworld-server-test  |  Update state (0x61) downloading, progress: 26.94 (605677326 / 2248053389)
+palworld-server-test  |  Update state (0x61) downloading, progress: 43.36 (974668503 / 2248053389)
+palworld-server-test  |  Update state (0x61) downloading, progress: 50.34 (1131741178 / 2248053389)
+palworld-server-test  |  Update state (0x61) downloading, progress: 68.80 (1546680048 / 2248053389)
+palworld-server-test  |  Update state (0x61) downloading, progress: 78.83 (1772195557 / 2248053389)
+palworld-server-test  |  Update state (0x61) downloading, progress: 82.18 (1847369479 / 2248053389)
+palworld-server-test  |  Update state (0x61) downloading, progress: 99.95 (2247004818 / 2248053389)
+palworld-server-test  |  Update state (0x81) verifying update, progress: 19.09 (429077846 / 2248053389)
+palworld-server-test  |  Update state (0x81) verifying update, progress: 64.62 (1452760264 / 2248053389)
+palworld-server-test  | Success! App '2394010' fully installed.
+palworld-server-test  | *****CHECKING FOR EXISTING CONFIG*****
+palworld-server-test  | *****GENERATING CONFIG*****
+palworld-server-test  | [S_API] SteamAPI_Init(): Loaded local 'steamclient.so' OK.
+palworld-server-test  | CAppInfoCacheReadFromDiskThread took 5 milliseconds to initialize
+palworld-server-test  | Setting breakpad minidump AppID = 2394010
+palworld-server-test  | [S_API FAIL] Tried to access Steam interface SteamUser021 before SteamAPI_Init succeeded.
+palworld-server-test  | [S_API FAIL] Tried to access Steam interface SteamFriends017 before SteamAPI_Init succeeded.
+palworld-server-test  | [S_API FAIL] Tried to access Steam interface STEAMAPPS_INTERFACE_VERSION008 before SteamAPI_Init succeeded.
+palworld-server-test  | [S_API FAIL] Tried to access Steam interface SteamNetworkingUtils004 before SteamAPI_Init succeeded.
+palworld-server-test  | RCON_ENABLED=true
+palworld-server-test  | RCON_PORT=25575
+palworld-server-test  | ***** NO [PATCHED] SERVER: 当前服务端与修改后的 MD5 值不同。 *****
+palworld-server-test  | ***** [PATCHING] SERVER: 当前原始文件与预期的 MD5 值相同。 *****
+palworld-server-test  | 272f517e01bcfaa885a8911176d15369  /palworld/Pal/Binaries/Linux/PalServer-Linux-Test
+palworld-server-test  | 服务端修补完成。
+palworld-server-test  | 647b75edde73dd7d9825523fe8aa0f3e 272f517e01bcfaa885a8911176d15369 272f517e01bcfaa885a8911176d15369
+palworld-server-test  | *****STARTING SERVER*****
+palworld-server-test  | ./PalServer.sh -port=8211 -players=32 -adminpassword="Aa123456" -queryport=27015 -useperfthreads -NoAsyncLoadingThread -UseMultithreadForDS
+palworld-server-test  | [S_API] SteamAPI_Init(): Loaded local 'steamclient.so' OK.
+palworld-server-test  | Shutdown handler: initalize.
+palworld-server-test  | Increasing per-process limit of core file size to infinity.
+palworld-server-test  | - Existing per-process limit (soft=18446744073709551615, hard=18446744073709551615) is enough for us (need only 18446744073709551615)
+palworld-server-test  | CAppInfoCacheReadFromDiskThread took 5 milliseconds to initialize
+palworld-server-test  | Setting breakpad minidump AppID = 2394010
+palworld-server-test  | [S_API FAIL] Tried to access Steam interface SteamUser021 before SteamAPI_Init succeeded.
+palworld-server-test  | [S_API FAIL] Tried to access Steam interface SteamFriends017 before SteamAPI_Init succeeded.
+palworld-server-test  | [S_API FAIL] Tried to access Steam interface STEAMAPPS_INTERFACE_VERSION008 before SteamAPI_Init succeeded.
+palworld-server-test  | [S_API FAIL] Tried to access Steam interface SteamNetworkingUtils004 before SteamAPI_Init succeeded.
+palworld-server-test  | 
+palworld-server-test  | *****STARTING RCON*****
+palworld-server-test  | *****AUTO_SHUTDOWN IS ENABLED*****
+palworld-server-test  | Weird. This response is for another request.
+palworld-server-test  | Broadcasted: Server_current_memory_usage:_19.8971%.
+palworld-server-test  |
 ```
-
-This will open a CLI that uses RCON to write commands to the Palworld Server.
-
-### List of server commands
-
-| Command                          | Info                                                |
-|----------------------------------|-----------------------------------------------------|
-| Shutdown {Seconds} {MessageText} | The server is shut down after the number of Seconds |
-| DoExit                           | Force stop the server.                              |
-| Broadcast                        | Send message to all player in the server            |
-| KickPlayer {SteamID}             | Kick player from the server..                       |
-| BanPlayer {SteamID}              | BAN player from the server.                         |
-| TeleportToPlayer {SteamID}       | Teleport to current location of target player.      |
-| TeleportToMe {SteamID}           | Target player teleport to your current location     |
-| ShowPlayers                      | Show information on all connected players.          |
-| Info                             | Show server information.                            |
-| Save                             | Save the world data.                                |
-
-For a full list of commands go to: [https://tech.palworldgame.com/server-commands](https://tech.palworldgame.com/server-commands)
-
-## Creating a backup
-
-To create a backup of the game's save at the current point in time, use the command:
-
-```bash
-docker exec palworld-server backup
-```
-
-This will create a backup at `/palworld/backups/`
-
-The server will run a save before the backup if rcon is enabled.
-
-## Editing Server Settings
-
-When the server starts, a `PalWorldSettings.ini` file will be created in the following location: `<mount_folder>/Pal/Saved/Config/LinuxServer/PalWorldSettings.ini`
-
-Any changes made there will be applied to the Server on next boot.
-
-Please keep in mind that the ENV variables will always overwrite the changes made to `PalWorldSettings.ini`.
-
-For a more detailed list of explanations of server settings go to: [shockbyte](https://shockbyte.com/billing/knowledgebase/1189/How-to-Configure-your-Palworld-server.html)
-
-> [!TIP]
-> If the `<mount_folder>/Pal/Saved/Config/LinuxServer/PalWorldSettings.ini` is empty,
-> delete the file and restart the server, a new file with content will be created.
-
-## Reporting Issues/Feature Requests
-
-Issues/Feature requests can be submitted by using [this link](https://github.com/thijsvanloef/palworld-server-docker/issues/new/choose).
-
-### Known Issues
-
-Known issues are listed in the [wiki](https://github.com/thijsvanloef/palworld-server-docker/wiki/Known-Issues)

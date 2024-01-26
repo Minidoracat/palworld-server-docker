@@ -31,8 +31,6 @@ services:
     - PATCH_SERVER=true
     volumes:
     - ./palworld:/palworld/
-    - ~/PalServer-Linux-Test:/home/steam/PalServer-Linux-Test
-    - ~/md5.txt:/home/steam/md5.txt
     deploy:
       resources:
         limits:
@@ -43,22 +41,6 @@ services:
 networks:
   pal_network:
     external: true
-```
-
-请前往 https://github.com/VeroFess/PalWorld-Server-Unoffical-Fix/releases 下载最新 Linux patch 文件，并放置于当前用户根目录，也就是 ~/
-
-例如 /home/palserver/PalServer-Linux-Test
-
-然后查找已更新的服务端内的 **原始** `PalServer-Linux-Test` 文件md5并放置于 `~/md5.txt` 内。
-
-方法：`docker exec palworld-server md5sum /palworld/Pal/Binaries/Linux/PalServer-Linux-Test`
-
-`目前版本应该为：647b75edde73dd7d9825523fe8aa0f3e`
-
-此时你的根目录应该有两个文件
-```
--rw-rw-r--  1 palworld palworld        32 Jan 25 16:47 md5.txt
--rw-rw-r--  1 palworld palworld 189756648 Jan 25 16:22 PalServer-Linux-Test
 ```
 
 ## 首次启动的示范
@@ -80,42 +62,26 @@ palworld-server-test  | Connecting anonymously to Steam Public...OK
 palworld-server-test  | Waiting for client config...OK
 palworld-server-test  | Waiting for user info...OK
 palworld-server-test  |  Update state (0x3) reconfiguring, progress: 0.00 (0 / 0)
-palworld-server-test  |  Update state (0x61) downloading, progress: 1.31 (29360128 / 2248053389)
-palworld-server-test  |  Update state (0x61) downloading, progress: 6.80 (152921228 / 2248053389)
-palworld-server-test  |  Update state (0x61) downloading, progress: 21.67 (487114768 / 2248053389)
-palworld-server-test  |  Update state (0x61) downloading, progress: 26.94 (605677326 / 2248053389)
-palworld-server-test  |  Update state (0x61) downloading, progress: 43.36 (974668503 / 2248053389)
-palworld-server-test  |  Update state (0x61) downloading, progress: 50.34 (1131741178 / 2248053389)
-palworld-server-test  |  Update state (0x61) downloading, progress: 68.80 (1546680048 / 2248053389)
-palworld-server-test  |  Update state (0x61) downloading, progress: 78.83 (1772195557 / 2248053389)
-palworld-server-test  |  Update state (0x61) downloading, progress: 82.18 (1847369479 / 2248053389)
-palworld-server-test  |  Update state (0x61) downloading, progress: 99.95 (2247004818 / 2248053389)
-palworld-server-test  |  Update state (0x81) verifying update, progress: 19.09 (429077846 / 2248053389)
-palworld-server-test  |  Update state (0x81) verifying update, progress: 64.62 (1452760264 / 2248053389)
+palworld-server-test  |  Update state (0x3) reconfiguring, progress: 0.00 (0 / 0)
+palworld-server-test  |  Update state (0x5) verifying install, progress: 33.72 (757952516 / 2248053389)
+palworld-server-test  |  Update state (0x5) verifying install, progress: 78.61 (1767232590 / 2248053389)
+palworld-server-test  |  Update state (0x61) downloading, progress: 100.00 (189756648 / 189756648)
 palworld-server-test  | Success! App '2394010' fully installed.
 palworld-server-test  | *****CHECKING FOR EXISTING CONFIG*****
-palworld-server-test  | *****GENERATING CONFIG*****
-palworld-server-test  | [S_API] SteamAPI_Init(): Loaded local 'steamclient.so' OK.
-palworld-server-test  | CAppInfoCacheReadFromDiskThread took 5 milliseconds to initialize
-palworld-server-test  | Setting breakpad minidump AppID = 2394010
-palworld-server-test  | [S_API FAIL] Tried to access Steam interface SteamUser021 before SteamAPI_Init succeeded.
-palworld-server-test  | [S_API FAIL] Tried to access Steam interface SteamFriends017 before SteamAPI_Init succeeded.
-palworld-server-test  | [S_API FAIL] Tried to access Steam interface STEAMAPPS_INTERFACE_VERSION008 before SteamAPI_Init succeeded.
-palworld-server-test  | [S_API FAIL] Tried to access Steam interface SteamNetworkingUtils004 before SteamAPI_Init succeeded.
 palworld-server-test  | RCON_ENABLED=true
 palworld-server-test  | RCON_PORT=25575
 palworld-server-test  | ***** NO [PATCHED] SERVER: 当前服务端与修改后的 MD5 值不同。 *****
 palworld-server-test  | ***** [PATCHING] SERVER: 当前原始文件与预期的 MD5 值相同。 *****
-palworld-server-test  | 272f517e01bcfaa885a8911176d15369  /palworld/Pal/Binaries/Linux/PalServer-Linux-Test
-palworld-server-test  | 服务端修补完成。
-palworld-server-test  | 647b75edde73dd7d9825523fe8aa0f3e 272f517e01bcfaa885a8911176d15369 272f517e01bcfaa885a8911176d15369
+palworld-server-test  | ***** [PATCHED] SERVER: 服务端已修改。 *****
+palworld-server-test  | 应修改 647b75edde73dd7d9825523fe8aa0f3e 为 272f517e01bcfaa885a8911176d15369
+palworld-server-test  | 当前 272f517e01bcfaa885a8911176d15369
 palworld-server-test  | *****STARTING SERVER*****
 palworld-server-test  | ./PalServer.sh -port=8211 -players=32 -adminpassword="Aa123456" -queryport=27015 -useperfthreads -NoAsyncLoadingThread -UseMultithreadForDS
 palworld-server-test  | [S_API] SteamAPI_Init(): Loaded local 'steamclient.so' OK.
 palworld-server-test  | Shutdown handler: initalize.
 palworld-server-test  | Increasing per-process limit of core file size to infinity.
 palworld-server-test  | - Existing per-process limit (soft=18446744073709551615, hard=18446744073709551615) is enough for us (need only 18446744073709551615)
-palworld-server-test  | CAppInfoCacheReadFromDiskThread took 5 milliseconds to initialize
+palworld-server-test  | CAppInfoCacheReadFromDiskThread took 6 milliseconds to initialize
 palworld-server-test  | Setting breakpad minidump AppID = 2394010
 palworld-server-test  | [S_API FAIL] Tried to access Steam interface SteamUser021 before SteamAPI_Init succeeded.
 palworld-server-test  | [S_API FAIL] Tried to access Steam interface SteamFriends017 before SteamAPI_Init succeeded.
@@ -125,6 +91,6 @@ palworld-server-test  |
 palworld-server-test  | *****STARTING RCON*****
 palworld-server-test  | *****AUTO_SHUTDOWN IS ENABLED*****
 palworld-server-test  | Weird. This response is for another request.
-palworld-server-test  | Broadcasted: Server_current_memory_usage:_19.8971%.
+palworld-server-test  | Broadcasted: Server_current_memory_usage:_8.6453%.
 palworld-server-test  |
 ```

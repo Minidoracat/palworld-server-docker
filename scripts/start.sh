@@ -81,28 +81,28 @@ if [ "${PATCH_SERVER}" = true ]; then
         printf "\e[0;31m***** NO [PATCHED] SERVER: 当前服务端未安装或安装失败。 *****\e[0m\n"
         exit 1
     fi
+    old_md5=$(cat /home/steam/server/oldmd5)
+    new_md5=$(cat /home/steam/server/newmd5)
     current_md5=$(md5sum /palworld/Pal/Binaries/Linux/PalServer-Linux-Test | awk '{print $1}')
-    needpatch_md5=$(md5sum /home/steam/PalServer-Linux-Test | awk '{print $1}')
-    expected_md5=$(cat /home/steam/md5.txt)
 
-    # 判断 /palworld/Pal/Binaries/Linux/PalServer-Linux-Test 的 md5 值是否与 /home/steam/md5.txt 中的值相同
-    if [ "$current_md5" = "$needpatch_md5" ]; then
+    if [ "$current_md5" = "$new_md5" ]; then
         printf "\e[0;32m***** [PATCHED] SERVER: 当前服务端已修改。 *****\e[0m\n"
     else
         printf "\e[0;31m***** NO [PATCHED] SERVER: 当前服务端与修改后的 MD5 值不同。 *****\e[0m\n"
-        if [ "$current_md5" = "$expected_md5" ]; then
+        if [ "$current_md5" = "$old_md5" ]; then
             printf "\e[0;32m***** [PATCHING] SERVER: 当前原始文件与预期的 MD5 值相同。 *****\e[0m\n"
-            cp -f /home/steam/PalServer-Linux-Test /palworld/Pal/Binaries/Linux/PalServer-Linux-Test
-            chmod 755 /palworld/Pal/Binaries/Linux/PalServer-Linux-Test
+            mv /palworld/Pal/Binaries/Linux/PalServer-Linux-Test /palworld/Pal/Binaries/Linux/PalServer-Linux-Test.bak
+            bspatch /palworld/Pal/Binaries/Linux/PalServer-Linux-Test.bak /palworld/Pal/Binaries/Linux/PalServer-Linux-Test /home/steam/server/patch
+            chmod +x /palworld/Pal/Binaries/Linux/PalServer-Linux-Test
             chown steam:steam /palworld/Pal/Binaries/Linux/PalServer-Linux-Test
-            md5sum /palworld/Pal/Binaries/Linux/PalServer-Linux-Test
-            echo "服务端修补完成。"
+            printf "\e[0;32m***** [PATCHED] SERVER: 服务端已修改。 *****\e[0m\n"
         else
             printf "\e[0;32m***** NO [PATCH] NEEDED: 当前源文件与预期的 MD5 值不同。 *****\e[0m\n"
         fi
     fi
     current_md5=$(md5sum /palworld/Pal/Binaries/Linux/PalServer-Linux-Test | awk '{print $1}')
-    echo "$expected_md5 $current_md5 $needpatch_md5"
+    echo "应修改 $old_md5 为 $new_md5"
+    echo "当前 $current_md5"
 else
     printf "\e[0;32m***** NO [PATCH] NEEDED: 当前未启用服务端修补。 *****\e[0m\n"
 fi

@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     procps=2:3.3.17-5 \
     wget=1.21-1+deb11u1 \
     bc=1.07.1-2+b2 \
+    bsdiff=4.3-22 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

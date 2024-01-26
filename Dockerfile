@@ -1,10 +1,12 @@
 FROM cm2network/steamcmd:root
-LABEL maintainer="thijs@loef.dev"
+LABEL editor="djkcyl"
+LABEL maintainer="djkcyl <cyl@cyllive.cn>"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     xdg-user-dirs=0.17-2 \
     procps=2:3.3.17-5 \
     wget=1.21-1+deb11u1 \
+    bc=1.07.1-2+b2 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -26,10 +28,12 @@ ENV PORT= \
     RCON_ENABLED=true \
     RCON_PORT=25575 \
     QUERY_PORT=27015 \
-    TZ=UTC
+    TZ=UTC \
+    AUTO_SHUTDOWN=true \
+    PATCH_SERVER=true
 
 COPY ./scripts/* /home/steam/server/
-RUN chmod +x /home/steam/server/init.sh /home/steam/server/start.sh /home/steam/server/backup.sh
+RUN chmod +x /home/steam/server/init.sh /home/steam/server/start.sh /home/steam/server/backup.sh /home/steam/server/rcon.sh
 
 RUN mv /home/steam/server/backup.sh /usr/local/bin/backup
 

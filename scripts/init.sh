@@ -12,7 +12,7 @@ fi
 mkdir -p /palworld/backups
 chown -R steam:steam /palworld
 
-if [ "${UPDATE_ON_BOOT}" = true ]; then
+if [[ ! -f "/palworld/Pal/Binaries/Linux/PalServer-Linux-Test" ]] || [[ "${UPDATE_ON_BOOT}" = "true" ]]; then
     printf "\e[0;32m*****STARTING INSTALL/UPDATE*****\e[0m\n"
     su steam -c '/home/steam/steamcmd/steamcmd.sh +force_install_dir "/palworld" +login anonymous +app_update 2394010 validate +quit'
 fi
@@ -20,7 +20,7 @@ fi
 term_handler() {
     if [ "${RCON_ENABLED}" = true ]; then
         rcon-cli save
-        rcon-cli shutdown 1
+        rcon-cli shutdown 1 Server is shutting down.
     else # Does not save
         kill -SIGTERM "$(pidof PalServer-Linux-Test)"
     fi
@@ -29,6 +29,12 @@ term_handler() {
 
 trap 'term_handler' SIGTERM
 
+./rcon.sh &
 ./start.sh &
 killpid="$!"
-wait $killpid
+while kill -0 $killpid 2>/dev/null; do
+    sleep 1
+done
+
+kill 0
+exit 0

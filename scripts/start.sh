@@ -1,52 +1,57 @@
 #!/bin/bash
 
-STARTCOMMAND="./PalServer.sh"
+STARTCOMMAND=("./PalServer.sh")
 
 if [ -n "${PORT}" ]; then
-    STARTCOMMAND="${STARTCOMMAND} -port=${PORT}"
+    STARTCOMMAND+=("-port=${PORT}")
 fi
 
 if [ -n "${PLAYERS}" ]; then
-    STARTCOMMAND="${STARTCOMMAND} -players=${PLAYERS}"
+    STARTCOMMAND+=("-players=${PLAYERS}")
 fi
 
 if [ "${COMMUNITY}" = true ]; then
-    STARTCOMMAND="${STARTCOMMAND} EpicApp=PalServer"
+    STARTCOMMAND+=("EpicApp=PalServer")
 fi
 
 if [ -n "${PUBLIC_IP}" ]; then
-    STARTCOMMAND="${STARTCOMMAND} -publicip=${PUBLIC_IP}"
+    STARTCOMMAND+=("-publicip=${PUBLIC_IP}")
 fi
 
 if [ -n "${PUBLIC_PORT}" ]; then
-    STARTCOMMAND="${STARTCOMMAND} -publicport=${PUBLIC_PORT}"
+    STARTCOMMAND+=("-publicport=${PUBLIC_PORT}")
 fi
 
 if [ -n "${SERVER_NAME}" ]; then
-    STARTCOMMAND="${STARTCOMMAND} -servername=${SERVER_NAME}"
+    STARTCOMMAND+=("-servername=${SERVER_NAME}")
+fi
+
+if [ -n "${SERVER_DESCRIPTION}" ]; then
+    STARTCOMMAND+=("-serverdescription=${SERVER_DESCRIPTION}")
 fi
 
 if [ -n "${SERVER_PASSWORD}" ]; then
-    STARTCOMMAND="${STARTCOMMAND} -serverpassword=${SERVER_PASSWORD}"
+    STARTCOMMAND+=("-serverpassword=${SERVER_PASSWORD}")
 fi
 
 if [ -n "${ADMIN_PASSWORD}" ]; then
-    STARTCOMMAND="${STARTCOMMAND} -adminpassword=${ADMIN_PASSWORD}"
+    STARTCOMMAND+=("-adminpassword=${ADMIN_PASSWORD}")
 fi
 
 if [ -n "${QUERY_PORT}" ]; then
-    STARTCOMMAND="${STARTCOMMAND} -queryport=${QUERY_PORT}"
+    STARTCOMMAND+=("-queryport=${QUERY_PORT}")
 fi
 
 if [ "${MULTITHREADING}" = true ]; then
-    STARTCOMMAND="${STARTCOMMAND} -useperfthreads -NoAsyncLoadingThread -UseMultithreadForDS"
+    STARTCOMMAND+=("-useperfthreads" "-NoAsyncLoadingThread" "-UseMultithreadForDS")
 fi
 
 cd /palworld || exit
 
 printf "\e[0;32m*****CHECKING FOR EXISTING CONFIG*****\e[0m\n"
 
-if [ ! -f /palworld/Pal/Saved/Config/LinuxServer/PalWorldSettings.ini ]; then
+# shellcheck disable=SC2143
+if [ ! "$(grep -s '[^[:space:]]' /palworld/Pal/Saved/Config/LinuxServer/PalWorldSettings.ini)" ]; then
 
     printf "\e[0;32m*****GENERATING CONFIG*****\e[0m\n"
 
@@ -68,10 +73,10 @@ if [ -n "${RCON_PORT}" ]; then
 fi
 
 # Configure RCON settings
-cat >~/.rcon-cli.yaml  <<EOL
-host: localhost
-port: ${RCON_PORT}
-password: ${ADMIN_PASSWORD}
+cat >/home/steam/server/rcon.yaml  <<EOL
+default:
+  address: "127.0.0.1:${RCON_PORT}"
+  password: ${ADMIN_PASSWORD}
 EOL
 
 # Patch server binary
@@ -109,5 +114,6 @@ fi
 
 
 printf "\e[0;32m*****STARTING SERVER*****\e[0m\n"
-echo "${STARTCOMMAND}"
-su steam -c "${STARTCOMMAND}"
+echo "bash -c '${STARTCOMMAND[*]}'"
+su steam -c "bash -c '${STARTCOMMAND[*]}'"
+

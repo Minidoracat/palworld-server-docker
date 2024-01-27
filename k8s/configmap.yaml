@@ -14,6 +14,7 @@ data:
   TZ: UTC
   COMMUNITY: "false"  # Enable this if you want your server to show up in the community servers tab, USE WITH SERVER_PASSWORD!
   SERVER_NAME: "World of Pals"
+  SERVER_DESCRIPTION: ""
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -21,6 +22,9 @@ metadata:
   name: palworld-settings
 data:
   PalWorldSettings.ini: >-
+    [/Script/OnlineSubsystemUtils.IpNetDriver]
+    NetServerMaxTickRate=60
+    
     [/Script/Pal.PalGameWorldSettings]
     
     OptionSettings=(

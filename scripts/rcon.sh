@@ -5,39 +5,34 @@ flag_file="/tmp/memory_over_80.flag"
 
 # Function to check memory usage and perform corresponding actions
 check_memory_usage() {
-    # 如果 AUTO_SHUTDOWN=true 则检查内存使用率，如果超过 98% 则保存并关闭服务器
     if [ "${AUTO_SHUTDOWN}" = true ]; then
         printf "\e[0;32m*****AUTO_SHUTDOWN IS ENABLED*****\e[0m\n"
     else
         printf "\e[0;32m*****AUTO_SHUTDOWN IS DISABLED*****\e[0m\n"
-        return
+        [ -f "/sys/fs/cgroup/memory/memory.limit_in_bytes" ] || return
     fi
+
     while true; do
         total_memory=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
         memory_usage=$(cat /sys/fs/cgroup/memory/memory.usage_in_bytes)
         usage_percent=$(awk "BEGIN {print ($memory_usage/$total_memory)*100}")
 
-        # Check if memory usage is over 98%
         if (( $(echo "$usage_percent > 98" | bc -l) )); then
             rcon-cli save
-            rcon-cli shutdown 5 Server is restarting in 5 seconds due to memory leak.
+            rcon-cli shutdown 5 "Server is restarting in 5 seconds due to memory leak."
         elif (( $(echo "$usage_percent > 80" | bc -l) )); then
-            # Check if the reminder has already been sent once
             if [ ! -f "$flag_file" ]; then
                 rcon-cli save
-                rcon-cli broadcast Current_memory_usage_is_over_80%.
-                # Create the flag file
+                rcon-cli broadcast "Current_memory_usage_is_over_80%."
                 touch "$flag_file"
             fi
         elif (( $(echo "$usage_percent < 65" | bc -l) )); then
-            # Delete the flag file if memory usage drops below 65%
-            if [ -f "$flag_file" ]; then
-                rm "$flag_file"
-            fi
+            [ -f "$flag_file" ] && rm "$flag_file"
         fi
         sleep 5
     done
 }
+
 
 # Function to report memory usage every ten minutes
 report_memory_usage() {

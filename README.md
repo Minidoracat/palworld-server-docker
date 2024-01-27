@@ -28,6 +28,7 @@ services:
     - ROCN_PORT=25575
     - UPDATE_ON_BOOT=false
     - AUTO_SHUTDOWN=true
+    - AUTO_BACKUP=true
     - PATCH_SERVER=true
     volumes:
     - ./palworld:/palworld/

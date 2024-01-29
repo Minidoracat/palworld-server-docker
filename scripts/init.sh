@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [[ ! "${PUID}" -eq 0 ]] && [[ ! "${PGID}" -eq 0 ]]; then
-    printf "\e[0;32m*****EXECUTING USERMOD*****\e[0m\n"
+    printf "\e[0;32m*****PUID和PGID已设置*****\e[0m\n"
     usermod -o -u "${PUID}" steam
     groupmod -o -g "${PGID}" steam
 else

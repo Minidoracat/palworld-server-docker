@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [[ ! -f "/palworld/Pal/Binaries/Linux/PalServer-Linux-Test" ]] || [[ "${UPDATE_ON_BOOT}" = "true" ]]; then
-    printf "\e[0;32m*****STARTING INSTALL/UPDATE*****\e[0m\n"
+    printf "\e[0;32m*****正在更新服务端*****\e[0m\n"
     /home/steam/steamcmd/steamcmd.sh +force_install_dir "/palworld" +login anonymous +app_update 2394010 validate +quit
 fi
 
@@ -41,12 +41,12 @@ fi
 
 cd /palworld || exit
 
-printf "\e[0;32m*****CHECKING FOR EXISTING CONFIG*****\e[0m\n"
+printf "\e[0;32m*****正在检查配置文件*****\e[0m\n"
 
 # shellcheck disable=SC2143
 if [ ! "$(grep -s '[^[:space:]]' /palworld/Pal/Saved/Config/LinuxServer/PalWorldSettings.ini)" ]; then
 
-    printf "\e[0;32m*****GENERATING CONFIG*****\e[0m\n"
+    printf "\e[0;32m*****配置文件不存在，正在创建*****\e[0m\n"
 
     # Server will generate all ini files after first run.
     timeout --preserve-status 15s ./PalServer.sh 1> /dev/null
@@ -300,7 +300,7 @@ EOL
 
 if [ "${PATCH_SERVER}" = true ]; then
     if [ ! -f /palworld/Pal/Binaries/Linux/PalServer-Linux-Test ]; then
-        printf "\e[0;31m***** NO [PATCHED] SERVER: 当前服务端未安装或安装失败。 *****\e[0m\n"
+        printf "\e[0;31m***** NO [PATCH] NEEDED: 服务端文件不存在。 *****\e[0m\n"
         exit 1
     fi
     old_md5=$(cat /home/steam/server/oldmd5)
@@ -330,7 +330,7 @@ else
 fi
 
 
-printf "\e[0;32m*****STARTING SERVER*****\e[0m\n"
+printf "\e[0;32m*****正在启动服务端*****\e[0m\n"
 echo "${STARTCOMMAND[*]}"
 "${STARTCOMMAND[@]}"
 

@@ -6,7 +6,7 @@ flag_file="/tmp/memory_over_80.flag"
 # Function to check memory usage and perform corresponding actions
 check_memory_usage() {
     if [ "${AUTO_SHUTDOWN}" = true ] && [ -f "/sys/fs/cgroup/memory/memory.limit_in_bytes" ]; then
-        printf "\e[0;32m*****AUTO_SHUTDOWN IS ENABLED AND MEMORY LIMIT FILE EXISTS*****\e[0m\n"
+        printf "\e[0;32m*****自动关机已启用*****\e[0m\n"
         
         while true; do
             total_memory=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
@@ -28,7 +28,7 @@ check_memory_usage() {
             sleep 5
         done
     else
-        printf "\e[0;32m*****AUTO_SHUTDOWN IS DISABLED OR MEMORY LIMIT FILE DOES NOT EXIST*****\e[0m\n"
+        printf "\e[0;32m*****自动关机已禁用或内存限制文件不存在*****\e[0m\n"
     fi
 }
 
@@ -49,9 +49,9 @@ report_memory_usage() {
 # Function to backup the server every 1 hour
 backup_server() {
     if [ "${AUTO_BACKUP}" = true ]; then
-        printf "\e[0;32m*****AUTO_BACKUP IS ENABLED*****\e[0m\n"
+        printf "\e[0;32m*****自动备份已启用*****\e[0m\n"
     else
-        printf "\e[0;32m*****AUTO_BACKUP IS DISABLED*****\e[0m\n"
+        printf "\e[0;32m*****自动备份已禁用*****\e[0m\n"
         return
     fi
     sleep 600
@@ -77,7 +77,7 @@ backup_server() {
 # Run the functions in the background
 sleep 30
 echo ""
-printf "\e[0;32m*****STARTING RCON*****\e[0m\n"
+printf "\e[0;32m*****开始定时任务*****\e[0m\n"
 check_memory_usage &
 report_memory_usage &
 backup_server &

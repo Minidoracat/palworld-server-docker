@@ -11,10 +11,15 @@ BACKUP_DIR="/palworld/backups"
 cd /palworld/Pal/ || exit
 
 tar -zcf "$FILE_PATH" "Saved/"
-echo "Backup created at $FILE_PATH"
 
 cd "$BACKUP_DIR" || exit
 ls -1t | tail -n +31 | xargs -d '\n' rm -f --
 
 echo "Old backups cleaned up, if necessary."
 
+
+if [ "$(id -u)" -eq 0 ]; then
+        chown steam:steam "$FILE_PATH"
+fi
+
+echo "backup created at $FILE_PATH"

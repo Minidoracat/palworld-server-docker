@@ -19,8 +19,8 @@ fi
 
 term_handler() {
     if [ "${RCON_ENABLED}" = true ]; then
-        rcon-cli save
-        rcon-cli shutdown 1 Server is shutting down.
+        rcon-cli "save"
+        rcon-cli "shutdown 1 Server is shutting down."
     else # Does not save
         kill -SIGTERM "$(pidof PalServer-Linux-Test)"
     fi

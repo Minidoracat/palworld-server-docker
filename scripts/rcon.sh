@@ -5,34 +5,32 @@ flag_file="/tmp/memory_over_80.flag"
 
 # Function to check memory usage and perform corresponding actions
 check_memory_usage() {
-    if [ "${AUTO_SHUTDOWN}" = true ]; then
-        printf "\e[0;32m*****AUTO_SHUTDOWN IS ENABLED*****\e[0m\n"
-    else
-        printf "\e[0;32m*****AUTO_SHUTDOWN IS DISABLED*****\e[0m\n"
-        [ -f "/sys/fs/cgroup/memory/memory.limit_in_bytes" ] || return
-    fi
+    if [ "${AUTO_SHUTDOWN}" = true ] && [ -f "/sys/fs/cgroup/memory/memory.limit_in_bytes" ]; then
+        printf "\e[0;32m*****AUTO_SHUTDOWN IS ENABLED AND MEMORY LIMIT FILE EXISTS*****\e[0m\n"
+        
+        while true; do
+            total_memory=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
+            memory_usage=$(cat /sys/fs/cgroup/memory/memory.usage_in_bytes)
+            usage_percent=$(awk "BEGIN {print ($memory_usage/$total_memory)*100}")
 
-    while true; do
-        total_memory=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
-        memory_usage=$(cat /sys/fs/cgroup/memory/memory.usage_in_bytes)
-        usage_percent=$(awk "BEGIN {print ($memory_usage/$total_memory)*100}")
-
-        if (( $(echo "$usage_percent > 98" | bc -l) )); then
-            rcon-cli save
-            rcon-cli shutdown 5 "Server is restarting in 5 seconds due to memory leak."
-        elif (( $(echo "$usage_percent > 80" | bc -l) )); then
-            if [ ! -f "$flag_file" ]; then
-                rcon-cli save
-                rcon-cli broadcast "Current_memory_usage_is_over_80%."
-                touch "$flag_file"
+            if (( $(echo "$usage_percent > 98" | bc -l) )); then
+                rcon-cli "save"
+                rcon-cli "shutdown 5 Server is restarting in 5 seconds due to memory leak."
+            elif (( $(echo "$usage_percent > 80" | bc -l) )); then
+                if [ ! -f "$flag_file" ]; then
+                    rcon-cli "save"
+                    rcon-cli "broadcast Current_memory_usage_is_over_80%."
+                    touch "$flag_file"
+                fi
+            elif (( $(echo "$usage_percent < 65" | bc -l) )); then
+                [ -f "$flag_file" ] && rm "$flag_file"
             fi
-        elif (( $(echo "$usage_percent < 65" | bc -l) )); then
-            [ -f "$flag_file" ] && rm "$flag_file"
-        fi
-        sleep 5
-    done
+            sleep 5
+        done
+    else
+        printf "\e[0;32m*****AUTO_SHUTDOWN IS DISABLED OR MEMORY LIMIT FILE DOES NOT EXIST*****\e[0m\n"
+    fi
 }
-
 
 # Function to report memory usage every ten minutes
 report_memory_usage() {
@@ -41,7 +39,7 @@ report_memory_usage() {
         memory_usage=$(cat /sys/fs/cgroup/memory/memory.usage_in_bytes)
         usage_percent=$(awk "BEGIN {print ($memory_usage/$total_memory)*100}")
 
-        rcon-cli broadcast Server_current_memory_usage:_${usage_percent}%.
+        rcon-cli "broadcast Server_current_memory_usage:_${usage_percent}%."
 
         sleep 1800
     done
@@ -50,16 +48,16 @@ report_memory_usage() {
 
 # Function to backup the server every 1 hour
 backup_server() {
-    sleep 600
     if [ "${AUTO_BACKUP}" = true ]; then
         printf "\e[0;32m*****AUTO_BACKUP IS ENABLED*****\e[0m\n"
     else
         printf "\e[0;32m*****AUTO_BACKUP IS DISABLED*****\e[0m\n"
         return
     fi
+    sleep 600
     while true; do
-        rcon-cli save
-        rcon-cli broadcast Server_is_backing_up.
+        rcon-cli "save"
+        rcon-cli "broadcast Server_is_backing_up."
         DATE=$(date +"%Y-%m-%d_%H-%M-%S")
         FILE_PATH="/palworld/backups/palworld-save-${DATE}.tar.gz"
         BACKUP_DIR="/palworld/backups"
